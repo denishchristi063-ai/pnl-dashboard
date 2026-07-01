@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PnL Dash">
+<title>P&L Dashboard</title>
+<style>
+  :root{
+    --bg:#0b0d12;
+    --card:#141824;
+    --card-border:#232838;
+    --text:#e8eaf0;
+    --text-dim:#8891a5;
+    --green:#2fd67f;
+    --red:#ff5c5c;
+    --amber:#ffb648;
+    --accent:#5b8cff;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Segoe UI,Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-top:env(safe-area-inset-top);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  header{
+    position:sticky;top:0;z-index:10;
+    background:linear-gradient(180deg,rgba(11,13,18,0.97),rgba(11,13,18,0.85));
+    backdrop-filter:blur(10px);
+    padding:16px 16px 10px;
+    border-bottom:1px solid var(--card-border);
+  }
+  header h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-0.3px;}
+  .status-row{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:var(--text-dim);}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--red);}
+  .dot.live{background:var(--green);box-shadow:0 0 6px var(--green);}
+  .summary{
+    display:flex;gap:10px;margin-top:14px;overflow-x:auto;padding-bottom:2px;
+  }
+  .summary-card{
+    flex:1;min-width:110px;background:var(--card);border:1px solid var(--card-border);
+    border-radius:14px;padding:10px 12px;
+  }
+  .summary-card .label{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.4px;}
+  .summary-card .value{font-size:18px;font-weight:700;margin-top:2px;}
+  main{padding:14px 16px 40px;display:flex;flex-direction:column;gap:12px;}
+  .acc-card{
+    background:var(--card);border:1px solid var(--card-border);border-radius:16px;
+    padding:14px 16px;transition:opacity .2s;
+  }
+  .acc-card.offline{opacity:0.45;}
+  .acc-top{display:flex;justify-content:space-between;align-items:flex-start;}
+  .acc-name{font-size:15px;font-weight:700;}
+  .acc-meta{font-size:11px;color:var(--text-dim);margin-top:2px;}
+  .acc-pnl{font-size:20px;font-weight:800;text-align:right;}
+  .acc-pnl.pos{color:var(--green);}
+  .acc-pnl.neg{color:var(--red);}
+  .acc-pnl.flat{color:var(--text-dim);}
+  .badge{
+    display:inline-block;font-size:10px;padding:2px 7px;border-radius:20px;
+    background:rgba(91,140,255,0.15);color:var(--accent);margin-right:6px;font-weight:600;
+  }
+  .badge.offline-badge{background:rgba(255,92,92,0.15);color:var(--red);}
+  .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
+  .metric{background:rgba(255,255,255,0.03);border-radius:10px;padding:8px 10px;}
+  .metric .label{font-size:10px;color:var(--text-dim);text-transform:uppercase;}
+  .metric .val{font-size:13px;font-weight:600;margin-top:2px;}
+  .positions{margin-top:10px;font-size:12px;color:var(--text-dim);}
+  .pos-row{display:flex;justify-content:space-between;padding:3px 0;border-top:1px solid var(--card-border);}
+  .pos-row:first-child{border-top:none;}
+  .pos-row .p-pnl.pos{color:var(--green);}
+  .pos-row .p-pnl.neg{color:var(--red);}
+  .empty{text-align:center;color:var(--text-dim);padding:60px 20px;font-size:14px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>P&amp;L Dashboard</h1>
+  <div class="status-row">
+    <div class="dot" id="conn-dot"></div>
+    <span id="conn-text">Connecting…</span>
+  </div>
+  <div class="summary">
+    <div class="summary-card">
+      <div class="label">Accounts</div>
+      <div class="value" id="sum-count">0</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Total Equity</div>
+      <div class="value" id="sum-equity">0.00</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Total Floating</div>
+      <div class="value" id="sum-pnl">0.00</div>
+    </div>
+  </div>
+</header>
+
+<main id="cards"></main>
+
+<script>
+const STALE_MS = 15000;
+let accounts = {};
+
+const cardsEl = document.getElementById('cards');
+const dot = document.getElementById('conn-dot');
+const connText = document.getElementById('conn-text');
+
+function fmt(n, decimals=2){
+  n = Number(n) || 0;
+  return n.toLocaleString(undefined,{minimumFractionDigits:decimals, maximumFractionDigits:decimals});
+}
+
+function render(){
+  const ids = Object.keys(accounts).sort();
+  if(ids.length === 0){
+    cardsEl.innerHTML = '<div class="empty">Waiting for accounts to report in…<br>Make sure your EAs are attached and WebRequest URL is whitelisted.</div>';
+  } else {
+    cardsEl.innerHTML = ids.map(id => renderCard(accounts[id])).join('');
+  }
+
+  // summary
+  let totalEquity = 0, totalPnl = 0, count = 0;
+  const now = Date.now();
+  ids.forEach(id => {
+    const a = accounts[id];
+    const online = (now - a.last_update*1000) < STALE_MS;
+    totalEquity += Number(a.equity)||0;
+    totalPnl += Number(a.floating_pnl)||0;
+    count++;
+  });
+  document.getElementById('sum-count').textContent = count;
+  document.getElementById('sum-equity').textContent = fmt(totalEquity);
+  const pnlEl = document.getElementById('sum-pnl');
+  pnlEl.textContent = fmt(totalPnl);
+  pnlEl.style.color = totalPnl > 0 ? 'var(--green)' : (totalPnl < 0 ? 'var(--red)' : 'var(--text)');
+}
+
+function renderCard(a){
+  const now = Date.now();
+  const online = (now - a.last_update*1000) < STALE_MS;
+  const pnl = Number(a.floating_pnl)||0;
+  const pnlClass = pnl > 0 ? 'pos' : (pnl < 0 ? 'neg' : 'flat');
+  const positions = (a.positions||[]).map(p => {
+    const pc = (Number(p.profit)||0) >= 0 ? 'pos' : 'neg';
+    return `<div class="pos-row">
+      <span>${p.symbol||''} ${p.type||''} ${fmt(p.volume,2)}</span>
+      <span class="p-pnl ${pc}">${fmt(p.profit)}</span>
+    </div>`;
+  }).join('');
+
+  return `
+  <div class="acc-card ${online ? '' : 'offline'}">
+    <div class="acc-top">
+      <div>
+        <div class="acc-name">${a.label || a.account_id}</div>
+        <div class="acc-meta">
+          <span class="badge">${a.platform||'-'}</span>${a.broker||''} ${a.account_id ? '· #'+a.account_id : ''}
+        </div>
+      </div>
+      <div class="acc-pnl ${pnlClass}">${fmt(pnl)} ${a.currency||''}</div>
+    </div>
+    <div class="metrics">
+      <div class="metric"><div class="label">Balance</div><div class="val">${fmt(a.balance)}</div></div>
+      <div class="metric"><div class="label">Equity</div><div class="val">${fmt(a.equity)}</div></div>
+      <div class="metric"><div class="label">Margin Lvl</div><div class="val">${fmt(a.margin_level,1)}%</div></div>
+    </div>
+    ${!online ? '<div class="acc-meta" style="margin-top:8px;color:var(--red);">⚠ No update in over 15s — check terminal/VPS/EA</div>' : ''}
+    ${positions ? `<div class="positions">${positions}</div>` : ''}
+  </div>`;
+}
+
+// re-render every second so "offline" state / staleness updates live even without new data
+setInterval(render, 1000);
+
+function connect(){
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const ws = new WebSocket(`${proto}//${location.host}/ws`);
+
+  ws.onopen = () => {
+    dot.classList.add('live');
+    connText.textContent = 'Live';
+  };
+  ws.onclose = () => {
+    dot.classList.remove('live');
+    connText.textContent = 'Disconnected — retrying…';
+    setTimeout(connect, 2000);
+  };
+  ws.onerror = () => ws.close();
+  ws.onmessage = (evt) => {
+    const msg = JSON.parse(evt.data);
+    if(msg.type === 'full_state'){
+      accounts = msg.accounts || {};
+    } else if(msg.type === 'update'){
+      accounts[msg.account.account_id] = msg.account;
+    }
+    render();
+  };
+}
+
+connect();
+render();
+</script>
+</body>
+</html>
