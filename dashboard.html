@@ -9,15 +9,17 @@
 <title>P&L Dashboard</title>
 <style>
   :root{
-    --bg:#0b0d12;
-    --card:#141824;
-    --card-border:#232838;
-    --text:#e8eaf0;
-    --text-dim:#8891a5;
-    --green:#2fd67f;
-    --red:#ff5c5c;
-    --amber:#ffb648;
-    --accent:#5b8cff;
+    --bg:#f4f5f7;
+    --card:#ffffff;
+    --card-border:#e5e7eb;
+    --card-shadow:0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.06);
+    --text:#161a20;
+    --text-dim:#6b7280;
+    --green:#16a34a;
+    --red:#dc2626;
+    --amber:#d97706;
+    --accent:#7ac142;
+    --accent-dim:rgba(122,193,66,0.14);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{
@@ -29,7 +31,7 @@
   }
   header{
     position:sticky;top:0;z-index:10;
-    background:linear-gradient(180deg,rgba(11,13,18,0.97),rgba(11,13,18,0.85));
+    background:linear-gradient(180deg,rgba(244,245,247,0.98),rgba(244,245,247,0.88));
     backdrop-filter:blur(10px);
     padding:16px 16px 10px;
     border-bottom:1px solid var(--card-border);
@@ -37,22 +39,22 @@
   header h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-0.3px;}
   .status-row{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:var(--text-dim);}
   .dot{width:8px;height:8px;border-radius:50%;background:var(--red);}
-  .dot.live{background:var(--green);box-shadow:0 0 6px var(--green);}
+  .dot.live{background:var(--accent);box-shadow:0 0 6px var(--accent);}
   .summary{
     display:flex;gap:10px;margin-top:14px;overflow-x:auto;padding-bottom:2px;
   }
   .summary-card{
     flex:1;min-width:110px;background:var(--card);border:1px solid var(--card-border);
-    border-radius:14px;padding:10px 12px;
+    border-radius:14px;padding:10px 12px;box-shadow:var(--card-shadow);
   }
   .summary-card .label{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.4px;}
   .summary-card .value{font-size:18px;font-weight:700;margin-top:2px;}
   main{padding:14px 16px 40px;display:flex;flex-direction:column;gap:12px;}
   .acc-card{
     background:var(--card);border:1px solid var(--card-border);border-radius:16px;
-    padding:14px 16px;transition:opacity .2s;
+    padding:14px 16px;transition:opacity .2s;box-shadow:var(--card-shadow);
   }
-  .acc-card.offline{opacity:0.45;}
+  .acc-card.offline{opacity:0.55;}
   .acc-top{display:flex;justify-content:space-between;align-items:flex-start;}
   .acc-name{font-size:15px;font-weight:700;}
   .acc-meta{font-size:11px;color:var(--text-dim);margin-top:2px;}
@@ -62,11 +64,11 @@
   .acc-pnl.flat{color:var(--text-dim);}
   .badge{
     display:inline-block;font-size:10px;padding:2px 7px;border-radius:20px;
-    background:rgba(91,140,255,0.15);color:var(--accent);margin-right:6px;font-weight:600;
+    background:var(--accent-dim);color:#4f8a1f;margin-right:6px;font-weight:700;
   }
-  .badge.offline-badge{background:rgba(255,92,92,0.15);color:var(--red);}
+  .badge.offline-badge{background:rgba(220,38,38,0.1);color:var(--red);}
   .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
-  .metric{background:rgba(255,255,255,0.03);border-radius:10px;padding:8px 10px;}
+  .metric{background:#f7f8fa;border-radius:10px;padding:8px 10px;}
   .metric .label{font-size:10px;color:var(--text-dim);text-transform:uppercase;}
   .metric .val{font-size:13px;font-weight:600;margin-top:2px;}
   .positions{margin-top:10px;font-size:12px;color:var(--text-dim);}
