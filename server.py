@@ -36,6 +36,7 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Stre
 # ---------------------------------------------------------------------------
 API_KEY = os.environ.get("PNL_API_KEY", "changeme123")             # EAs authenticate with this
 DASHBOARD_PASSWORD = os.environ.get("DASHBOARD_PASSWORD", "changeme")  # humans authenticate with this
+print(f"[startup] DASHBOARD_PASSWORD loaded, length={len(DASHBOARD_PASSWORD)}, from_env={'DASHBOARD_PASSWORD' in os.environ}")
 STALE_AFTER_SECONDS = 15
 HISTORY_INTERVAL_SECONDS = 60   # throttle: log at most one history row per account per this interval
 DB_PATH = os.environ.get("PNL_DB_PATH", os.path.join(os.path.dirname(os.path.abspath(__file__)), "pnl_history.db"))
@@ -124,10 +125,13 @@ async def login_page():
 
 @app.post("/login")
 async def login_submit(password: str = Form(...)):
-    if password != DASHBOARD_PASSWORD:
+    match = (password == DASHBOARD_PASSWORD)
+    print(f"[login] received_len={len(password)} expected_len={len(DASHBOARD_PASSWORD)} match={match}")
+    if not match:
         return RedirectResponse(url="/login?error=1", status_code=303)
     resp = RedirectResponse(url="/", status_code=303)
     resp.set_cookie(AUTH_COOKIE_NAME, auth_token(), max_age=60 * 60 * 24 * 90, httponly=True, samesite="lax")
+    print(f"[login] success, cookie set")
     return resp
 
 
@@ -344,6 +348,8 @@ async def websocket_endpoint(ws: WebSocket):
 # ---------------------------------------------------------------------------
 @app.get("/")
 async def serve_dashboard(request: Request):
+    cookie_val = request.cookies.get(AUTH_COOKIE_NAME)
+    print(f"[serve_dashboard] cookie_present={cookie_val is not None} authed={is_authed(request)}")
     if not is_authed(request):
         return RedirectResponse(url="/login")
     return FileResponse(os.path.join(HERE, "dashboard.html"))
