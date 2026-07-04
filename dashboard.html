@@ -5,88 +5,148 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PnL Dash">
-<title>P&L Dashboard</title>
+<meta name="apple-mobile-web-app-title" content="PnL Terminal">
+<title>P&L Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#f4f5f7;
-    --card:#ffffff;
-    --card-border:#e5e7eb;
-    --card-shadow:0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.06);
-    --text:#161a20;
+    --bg:#0a0d13;
+    --bg-card:#12161f;
+    --border:#1e2430;
+    --border-soft:#171c26;
+    --text:#e9ecf2;
     --text-dim:#6b7280;
-    --green:#16a34a;
-    --red:#dc2626;
-    --amber:#d97706;
-    --accent:#7ac142;
-    --accent-dim:rgba(122,193,66,0.14);
+    --text-mid:#94a0b3;
+    --amber:#e8a33d;
+    --amber-dim:rgba(232,163,61,0.13);
+    --green:#3ecf8e;
+    --red:#f0654e;
+    --red-dim:rgba(240,101,78,0.12);
+    --sans:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{
     margin:0;padding:0;background:var(--bg);color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Segoe UI,Roboto,sans-serif;
+    font-family:var(--sans);
     -webkit-font-smoothing:antialiased;
     padding-top:env(safe-area-inset-top);
     padding-bottom:env(safe-area-inset-bottom);
   }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+
+  body{
+    background-image:
+      linear-gradient(rgba(232,163,61,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,163,61,0.025) 1px, transparent 1px);
+    background-size:28px 28px;
+    background-attachment:fixed;
+  }
+
   header{
     position:sticky;top:0;z-index:10;
-    background:linear-gradient(180deg,rgba(244,245,247,0.98),rgba(244,245,247,0.88));
-    backdrop-filter:blur(10px);
-    padding:16px 16px 10px;
-    border-bottom:1px solid var(--card-border);
+    background:linear-gradient(180deg, rgba(10,13,19,0.98), rgba(10,13,19,0.88));
+    backdrop-filter:blur(14px);
+    padding:18px 16px 14px;
+    border-bottom:1px solid var(--border);
   }
-  header h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-0.3px;}
-  .status-row{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:var(--text-dim);}
-  .dot{width:8px;height:8px;border-radius:50%;background:var(--red);}
-  .dot.live{background:var(--accent);box-shadow:0 0 6px var(--accent);}
-  .summary{
-    display:flex;gap:10px;margin-top:14px;overflow-x:auto;padding-bottom:2px;
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:10.5px;letter-spacing:1.8px;color:var(--amber);
+    text-transform:uppercase;font-weight:600;
+    display:flex;align-items:center;gap:7px;
   }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--red);flex-shrink:0;}
+  .eyebrow .dot.live{background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
+  h1{
+    margin:6px 0 0;font-size:22px;font-weight:700;letter-spacing:-0.4px;
+    font-family:var(--sans);
+  }
+
+  .summary{display:flex;gap:8px;margin-top:16px;}
   .summary-card{
-    flex:1;min-width:110px;background:var(--card);border:1px solid var(--card-border);
-    border-radius:14px;padding:10px 12px;box-shadow:var(--card-shadow);
+    flex:1;background:var(--bg-card);border:1px solid var(--border);
+    border-radius:10px;padding:10px 12px;min-width:0;
   }
-  .summary-card .label{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.4px;}
-  .summary-card .value{font-size:18px;font-weight:700;margin-top:2px;}
-  main{padding:14px 16px 40px;display:flex;flex-direction:column;gap:12px;}
+  .summary-card .label{
+    font-family:var(--mono);font-size:9.5px;color:var(--text-dim);
+    text-transform:uppercase;letter-spacing:1px;
+  }
+  .summary-card .value{
+    font-family:var(--mono);font-size:17px;font-weight:600;margin-top:3px;
+    font-feature-settings:"tnum";letter-spacing:-0.3px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+
+  main{padding:16px 16px 48px;display:flex;flex-direction:column;gap:12px;max-width:720px;margin:0 auto;}
+
   .acc-card{
-    background:var(--card);border:1px solid var(--card-border);border-radius:16px;
-    padding:14px 16px;transition:opacity .2s;box-shadow:var(--card-shadow);
+    background:var(--bg-card);border:1px solid var(--border);border-radius:14px;
+    padding:15px 16px 13px;transition:opacity .3s, border-color .2s;
   }
-  .acc-card.offline{opacity:0.55;}
-  .acc-top{display:flex;justify-content:space-between;align-items:flex-start;}
-  .acc-name{font-size:15px;font-weight:700;}
-  .acc-meta{font-size:11px;color:var(--text-dim);margin-top:2px;}
-  .acc-pnl{font-size:20px;font-weight:800;text-align:right;}
+  .acc-card.offline{opacity:0.4;}
+  .acc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .acc-name{font-size:14.5px;font-weight:600;letter-spacing:-0.1px;}
+  .acc-meta{
+    font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-top:4px;
+    display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  }
+  .badge{
+    display:inline-flex;align-items:center;font-family:var(--mono);font-size:9.5px;
+    padding:2px 6px;border-radius:4px;letter-spacing:0.4px;
+    background:var(--amber-dim);color:var(--amber);border:1px solid rgba(232,163,61,0.25);
+    font-weight:600;
+  }
+  .badge.stale{background:var(--red-dim);color:var(--red);border-color:rgba(240,101,78,0.3);}
+
+  .acc-pnl{
+    font-family:var(--mono);font-size:21px;font-weight:700;text-align:right;
+    font-feature-settings:"tnum";letter-spacing:-0.5px;flex-shrink:0;
+  }
   .acc-pnl.pos{color:var(--green);}
   .acc-pnl.neg{color:var(--red);}
-  .acc-pnl.flat{color:var(--text-dim);}
-  .badge{
-    display:inline-block;font-size:10px;padding:2px 7px;border-radius:20px;
-    background:var(--accent-dim);color:#4f8a1f;margin-right:6px;font-weight:700;
+  .acc-pnl.flat{color:var(--text-mid);}
+  .acc-pnl .ccy{font-size:11px;color:var(--text-dim);font-weight:500;margin-left:3px;}
+
+  .sparkline-wrap{margin-top:10px;height:34px;position:relative;}
+  .sparkline-wrap svg{width:100%;height:100%;display:block;overflow:visible;}
+
+  .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px;}
+  .metric .label{
+    font-family:var(--mono);font-size:9px;color:var(--text-dim);
+    text-transform:uppercase;letter-spacing:0.8px;
   }
-  .badge.offline-badge{background:rgba(220,38,38,0.1);color:var(--red);}
-  .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
-  .metric{background:#f7f8fa;border-radius:10px;padding:8px 10px;}
-  .metric .label{font-size:10px;color:var(--text-dim);text-transform:uppercase;}
-  .metric .val{font-size:13px;font-weight:600;margin-top:2px;}
-  .positions{margin-top:10px;font-size:12px;color:var(--text-dim);}
-  .pos-row{display:flex;justify-content:space-between;padding:3px 0;border-top:1px solid var(--card-border);}
-  .pos-row:first-child{border-top:none;}
+  .metric .val{
+    font-family:var(--mono);font-size:13px;font-weight:600;margin-top:3px;
+    font-feature-settings:"tnum";color:var(--text-mid);
+  }
+
+  .positions{margin-top:11px;border-top:1px solid var(--border-soft);padding-top:8px;}
+  .pos-row{
+    display:flex;justify-content:space-between;padding:4px 0;
+    font-family:var(--mono);font-size:11.5px;color:var(--text-mid);
+  }
+  .pos-row .p-tag{color:var(--text-dim);}
+  .pos-row .p-pnl{font-feature-settings:"tnum";font-weight:600;}
   .pos-row .p-pnl.pos{color:var(--green);}
   .pos-row .p-pnl.neg{color:var(--red);}
-  .empty{text-align:center;color:var(--text-dim);padding:60px 20px;font-size:14px;}
+
+  .empty{
+    text-align:center;color:var(--text-dim);padding:70px 24px;font-size:13.5px;
+    font-family:var(--mono);line-height:1.7;
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>P&amp;L Dashboard</h1>
-  <div class="status-row">
-    <div class="dot" id="conn-dot"></div>
-    <span id="conn-text">Connecting…</span>
-  </div>
+  <div class="eyebrow"><span class="dot" id="conn-dot"></span><span id="conn-text">CONNECTING</span></div>
+  <h1>P&amp;L Terminal</h1>
   <div class="summary">
     <div class="summary-card">
       <div class="label">Accounts</div>
@@ -107,7 +167,9 @@
 
 <script>
 const STALE_MS = 15000;
+const HISTORY_MAX = 40;
 let accounts = {};
+let history = {};
 
 const cardsEl = document.getElementById('cards');
 const dot = document.getElementById('conn-dot');
@@ -118,20 +180,53 @@ function fmt(n, decimals=2){
   return n.toLocaleString(undefined,{minimumFractionDigits:decimals, maximumFractionDigits:decimals});
 }
 
+function recordHistory(a){
+  const id = a.account_id;
+  if(!history[id]) history[id] = [];
+  const arr = history[id];
+  const last = arr[arr.length-1];
+  if(!last || last.equity !== a.equity){
+    arr.push({t: Date.now(), equity: Number(a.equity)||0});
+    if(arr.length > HISTORY_MAX) arr.shift();
+  }
+}
+
+function sparklineSvg(points){
+  if(points.length < 2){
+    return `<svg viewBox="0 0 300 34" preserveAspectRatio="none"></svg>`;
+  }
+  const vals = points.map(p => p.equity);
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const range = (max - min) || 1;
+  const w = 300, h = 30, pad = 2;
+  const step = w / (points.length - 1);
+  const coords = points.map((p, i) => {
+    const x = i * step;
+    const y = pad + (h - pad*2) * (1 - (p.equity - min) / range);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const last = points[points.length-1].equity;
+  const first = points[0].equity;
+  const color = last >= first ? 'var(--green)' : 'var(--red)';
+  const linePoints = coords.join(' ');
+  const areaPoints = `0,${h} ${linePoints} ${w},${h}`;
+  return `<svg viewBox="0 0 ${w} ${h+4}" preserveAspectRatio="none">
+    <polyline points="${areaPoints}" fill="${color}" opacity="0.08" stroke="none"/>
+    <polyline points="${linePoints}" fill="none" stroke="${color}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+  </svg>`;
+}
+
 function render(){
   const ids = Object.keys(accounts).sort();
   if(ids.length === 0){
-    cardsEl.innerHTML = '<div class="empty">Waiting for accounts to report in…<br>Make sure your EAs are attached and WebRequest URL is whitelisted.</div>';
+    cardsEl.innerHTML = '<div class="empty">// AWAITING FEED —<br>no accounts reporting yet.<br>Check EA WebRequest whitelist &amp; API key.</div>';
   } else {
     cardsEl.innerHTML = ids.map(id => renderCard(accounts[id])).join('');
   }
 
-  // summary
   let totalEquity = 0, totalPnl = 0, count = 0;
-  const now = Date.now();
   ids.forEach(id => {
     const a = accounts[id];
-    const online = (now - a.last_update*1000) < STALE_MS;
     totalEquity += Number(a.equity)||0;
     totalPnl += Number(a.floating_pnl)||0;
     count++;
@@ -148,10 +243,12 @@ function renderCard(a){
   const online = (now - a.last_update*1000) < STALE_MS;
   const pnl = Number(a.floating_pnl)||0;
   const pnlClass = pnl > 0 ? 'pos' : (pnl < 0 ? 'neg' : 'flat');
+  const hist = history[a.account_id] || [];
+
   const positions = (a.positions||[]).map(p => {
     const pc = (Number(p.profit)||0) >= 0 ? 'pos' : 'neg';
     return `<div class="pos-row">
-      <span>${p.symbol||''} ${p.type||''} ${fmt(p.volume,2)}</span>
+      <span class="p-tag">${p.symbol||''} <span style="color:var(--text-mid)">${p.type||''}</span> ${fmt(p.volume,2)}</span>
       <span class="p-pnl ${pc}">${fmt(p.profit)}</span>
     </div>`;
   }).join('');
@@ -162,22 +259,23 @@ function renderCard(a){
       <div>
         <div class="acc-name">${a.label || a.account_id}</div>
         <div class="acc-meta">
-          <span class="badge">${a.platform||'-'}</span>${a.broker||''} ${a.account_id ? '· #'+a.account_id : ''}
+          <span class="badge">${a.platform||'-'}</span>
+          <span>${a.broker||''}${a.account_id ? ' · #'+a.account_id : ''}</span>
+          ${!online ? '<span class="badge stale">STALE</span>' : ''}
         </div>
       </div>
-      <div class="acc-pnl ${pnlClass}">${fmt(pnl)} ${a.currency||''}</div>
+      <div class="acc-pnl ${pnlClass}">${pnl>=0?'+':''}${fmt(pnl)}<span class="ccy">${a.currency||''}</span></div>
     </div>
+    <div class="sparkline-wrap">${sparklineSvg(hist)}</div>
     <div class="metrics">
       <div class="metric"><div class="label">Balance</div><div class="val">${fmt(a.balance)}</div></div>
       <div class="metric"><div class="label">Equity</div><div class="val">${fmt(a.equity)}</div></div>
       <div class="metric"><div class="label">Margin Lvl</div><div class="val">${fmt(a.margin_level,1)}%</div></div>
     </div>
-    ${!online ? '<div class="acc-meta" style="margin-top:8px;color:var(--red);">⚠ No update in over 15s — check terminal/VPS/EA</div>' : ''}
     ${positions ? `<div class="positions">${positions}</div>` : ''}
   </div>`;
 }
 
-// re-render every second so "offline" state / staleness updates live even without new data
 setInterval(render, 1000);
 
 function connect(){
@@ -186,11 +284,11 @@ function connect(){
 
   ws.onopen = () => {
     dot.classList.add('live');
-    connText.textContent = 'Live';
+    connText.textContent = 'LIVE FEED';
   };
   ws.onclose = () => {
     dot.classList.remove('live');
-    connText.textContent = 'Disconnected — retrying…';
+    connText.textContent = 'DISCONNECTED — RETRYING';
     setTimeout(connect, 2000);
   };
   ws.onerror = () => ws.close();
@@ -198,8 +296,10 @@ function connect(){
     const msg = JSON.parse(evt.data);
     if(msg.type === 'full_state'){
       accounts = msg.accounts || {};
+      Object.values(accounts).forEach(recordHistory);
     } else if(msg.type === 'update'){
       accounts[msg.account.account_id] = msg.account;
+      recordHistory(msg.account);
     }
     render();
   };
