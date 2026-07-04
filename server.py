@@ -74,7 +74,12 @@ manager = ConnectionManager()
 # ---------------------------------------------------------------------------
 @app.post("/api/report")
 async def report(request: Request):
-    payload = await request.json()
+    try:
+        payload = await request.json()
+    except Exception as e:
+        body = await request.body()
+        print(f"PnL report: failed to parse JSON: {e} | raw body: {body[:500]!r}")
+        raise HTTPException(status_code=400, detail="malformed JSON payload")
 
     if payload.get("api_key") != API_KEY:
         raise HTTPException(status_code=401, detail="invalid api_key")
@@ -137,4 +142,5 @@ async def serve_dashboard():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=443)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
