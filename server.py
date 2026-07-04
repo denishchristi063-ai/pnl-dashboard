@@ -36,7 +36,7 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Stre
 # ---------------------------------------------------------------------------
 API_KEY = os.environ.get("PNL_API_KEY", "changeme123")             # EAs authenticate with this
 DASHBOARD_PASSWORD = os.environ.get("DASHBOARD_PASSWORD", "changeme")  # humans authenticate with this
-print(f"[startup] DASHBOARD_PASSWORD loaded, length={len(DASHBOARD_PASSWORD)}, from_env={'DASHBOARD_PASSWORD' in os.environ}")
+print(f"[startup] DASHBOARD_PASSWORD loaded, length={len(DASHBOARD_PASSWORD)}, from_env={'DASHBOARD_PASSWORD' in os.environ}, repr={DASHBOARD_PASSWORD!r}")
 STALE_AFTER_SECONDS = 15
 HISTORY_INTERVAL_SECONDS = 60   # throttle: log at most one history row per account per this interval
 DB_PATH = os.environ.get("PNL_DB_PATH", os.path.join(os.path.dirname(os.path.abspath(__file__)), "pnl_history.db"))
@@ -126,7 +126,7 @@ async def login_page():
 @app.post("/login")
 async def login_submit(password: str = Form(...)):
     match = (password == DASHBOARD_PASSWORD)
-    print(f"[login] received_len={len(password)} expected_len={len(DASHBOARD_PASSWORD)} match={match}")
+    print(f"[login] received_len={len(password)} expected_len={len(DASHBOARD_PASSWORD)} match={match} received_repr={password!r} expected_repr={DASHBOARD_PASSWORD!r}")
     if not match:
         return RedirectResponse(url="/login?error=1", status_code=303)
     resp = RedirectResponse(url="/", status_code=303)
