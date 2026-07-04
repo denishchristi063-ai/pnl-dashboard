@@ -26,6 +26,7 @@ pip install -r requirements.txt
 
 # set your own API key (don't leave the default!)
 export PNL_API_KEY="pick-a-long-random-string-here"
+export DASHBOARD_PASSWORD="pick-a-different-password-for-viewing-the-dashboard"
 
 python3 server.py
 ```
@@ -61,7 +62,44 @@ If the VPS has a firewall (ufw, security group, etc.), allow inbound TCP on port
 ### Optional but recommended: HTTPS
 Plain HTTP works fine for MT4/MT5 `WebRequest()` and for Safari, but if you want a padlock
 and to avoid "insecure" browser warnings, put nginx in front with a free Let's Encrypt cert
-and reverse-proxy to `127.0.0.1:443`. Not required to get this working.
+and reverse-proxy to `127.0.0.1:443`. Not required to get this working — and already handled
+for you if you're hosting on Render.
+
+---
+
+## New features
+
+### Password login
+The dashboard now requires a password before showing any account data — set via
+`DASHBOARD_PASSWORD` (separate from `PNL_API_KEY`, which is only used by the EAs, not humans).
+Visiting `/` without a valid session redirects to `/login`. A "log out" icon in the header clears
+your session. Note: since the session token is generated fresh each time the server process
+restarts, everyone gets logged out after a redeploy — that's expected, just log back in.
+
+### Persistent history + daily digest
+Every account snapshot is now throttled and logged to a local SQLite database
+(`pnl_history.db`), roughly one row per account per minute. This powers:
+- **Sparklines that survive page reloads** — on first load, each account's chart is seeded from
+  the last 6 hours of stored history, then continues live from there.
+- **Daily Digest** (button in the toolbar) — aggregates live + closed P&L per currency pair
+  across all your accounts for the day.
+- **CSV export** — download the day's full breakdown (per account, per symbol) as a `.csv` file.
+
+**Important caveat if hosted on Render's free tier:** the filesystem is ephemeral, meaning
+`pnl_history.db` gets wiped whenever the service redeploys or restarts after inactivity. History
+persists fine during normal day-to-day use, but isn't guaranteed to survive indefinitely on the
+free tier. If you need guaranteed long-term history, the fix is either a Render persistent disk
+(paid) or an external database (e.g. a free Neon/Supabase Postgres instance) — let me know if you
+want that wired up later.
+
+### Symbol filter
+Chips appear automatically for every currency pair currently reporting activity across any
+account. Tap one (or several) to narrow every account card — and the Daily Digest — down to just
+those symbols. Tap "All" to reset.
+
+### Light/dark theme
+Toggle via the icon in the header — preference is remembered per device (stored in the browser,
+not the server), so each device you view the dashboard from keeps its own choice.
 
 ---
 

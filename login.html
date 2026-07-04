@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>P&L Terminal — Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0d13; --bg-card:#12161f; --border:#1e2430;
+    --text:#e9ecf2; --text-dim:#6b7280; --amber:#e8a33d; --red:#f0654e;
+    --sans:'Inter',-apple-system,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);
+    display:flex;align-items:center;justify-content:center;}
+  .box{width:100%;max-width:320px;padding:28px;background:var(--bg-card);border:1px solid var(--border);
+    border-radius:16px;margin:16px;}
+  .eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:1.8px;color:var(--amber);
+    text-transform:uppercase;font-weight:600;}
+  h1{font-size:20px;margin:8px 0 20px;}
+  input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--border);
+    background:#0d1119;color:var(--text);font-size:15px;font-family:var(--mono);margin-bottom:14px;}
+  input:focus{outline:none;border-color:var(--amber);}
+  button{width:100%;padding:12px;border-radius:10px;border:none;background:var(--amber);
+    color:#1a1206;font-weight:700;font-size:14px;cursor:pointer;font-family:var(--sans);}
+  button:active{opacity:0.85;}
+  .error{color:var(--red);font-size:12.5px;font-family:var(--mono);margin:-6px 0 14px;}
+</style>
+</head>
+<body>
+  <div class="box">
+    <div class="eyebrow">PNL TERMINAL</div>
+    <h1>Enter password</h1>
+    <form method="POST" action="/login">
+      <input type="password" name="password" placeholder="Password" autofocus required>
+      <div id="err" class="error" style="display:none;">Incorrect password — try again.</div>
+      <button type="submit">Unlock</button>
+    </form>
+  </div>
+  <script>
+    if(new URLSearchParams(location.search).get('error')){
+      document.getElementById('err').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
