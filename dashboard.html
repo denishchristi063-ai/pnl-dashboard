@@ -117,6 +117,7 @@
   .sparkline-wrap svg{width:100%;height:100%;display:block;overflow:visible;}
 
   .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px;}
+  .metrics.secondary{margin-top:8px;}
   .metric .label{
     font-family:var(--mono);font-size:9px;color:var(--text-dim);
     text-transform:uppercase;letter-spacing:0.8px;
@@ -125,16 +126,40 @@
     font-family:var(--mono);font-size:13px;font-weight:600;margin-top:3px;
     font-feature-settings:"tnum";color:var(--text-mid);
   }
+  .metric .val.pos{color:var(--green);}
+  .metric .val.neg{color:var(--red);}
+
+  .baskets{margin-top:11px;border-top:1px solid var(--border-soft);padding-top:9px;}
+  .baskets-title{
+    font-family:var(--mono);font-size:9px;color:var(--text-dim);
+    text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;
+  }
+  .basket-row{
+    background:rgba(255,255,255,0.02);border-radius:8px;padding:7px 9px;margin-bottom:5px;
+  }
+  .basket-top{display:flex;justify-content:space-between;align-items:baseline;}
+  .basket-symbol{font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--text);}
+  .basket-legs{font-family:var(--mono);font-size:9.5px;color:var(--text-dim);}
+  .basket-net{font-family:var(--mono);font-size:12.5px;font-weight:700;font-feature-settings:"tnum";}
+  .basket-net.pos{color:var(--green);}
+  .basket-net.neg{color:var(--red);}
+  .basket-detail{
+    display:flex;gap:10px;margin-top:4px;font-family:var(--mono);font-size:9.5px;color:var(--text-dim);
+    flex-wrap:wrap;
+  }
+  .basket-detail span b{color:var(--text-mid);font-weight:600;}
 
   .positions{margin-top:11px;border-top:1px solid var(--border-soft);padding-top:8px;}
-  .pos-row{
-    display:flex;justify-content:space-between;padding:4px 0;
-    font-family:var(--mono);font-size:11.5px;color:var(--text-mid);
+  .pos-row{padding:5px 0;font-family:var(--mono);font-size:11px;color:var(--text-mid);}
+  .pos-row-top{display:flex;justify-content:space-between;}
+  .pos-row-top .p-tag{color:var(--text-dim);}
+  .pos-row-top .p-pnl{font-feature-settings:"tnum";font-weight:600;}
+  .pos-row-top .p-pnl.pos{color:var(--green);}
+  .pos-row-top .p-pnl.neg{color:var(--red);}
+  .pos-row-detail{
+    display:flex;gap:9px;margin-top:2px;font-size:9.5px;color:var(--text-dim);flex-wrap:wrap;
   }
-  .pos-row .p-tag{color:var(--text-dim);}
-  .pos-row .p-pnl{font-feature-settings:"tnum";font-weight:600;}
-  .pos-row .p-pnl.pos{color:var(--green);}
-  .pos-row .p-pnl.neg{color:var(--red);}
+  .pos-row-detail span b{color:var(--text-mid);font-weight:500;}
 
   .empty{
     text-align:center;color:var(--text-dim);padding:70px 24px;font-size:13.5px;
@@ -238,18 +263,55 @@ function render(){
   pnlEl.style.color = totalPnl > 0 ? 'var(--green)' : (totalPnl < 0 ? 'var(--red)' : 'var(--text)');
 }
 
+function fmtDuration(mins){
+  mins = Number(mins)||0;
+  if(mins < 60) return mins + 'm';
+  const h = Math.floor(mins/60), m = mins%60;
+  if(h < 24) return h + 'h ' + m + 'm';
+  const d = Math.floor(h/24);
+  return d + 'd ' + (h%24) + 'h';
+}
+
 function renderCard(a){
   const now = Date.now();
   const online = (now - a.last_update*1000) < STALE_MS;
   const pnl = Number(a.floating_pnl)||0;
   const pnlClass = pnl > 0 ? 'pos' : (pnl < 0 ? 'neg' : 'flat');
   const hist = history[a.account_id] || [];
+  const dayPnl = Number(a.day_pnl)||0;
+  const dd = Number(a.drawdown_pct)||0;
 
   const positions = (a.positions||[]).map(p => {
     const pc = (Number(p.profit)||0) >= 0 ? 'pos' : 'neg';
+    const hasSlTp = (Number(p.sl)||0) > 0 || (Number(p.tp)||0) > 0;
     return `<div class="pos-row">
-      <span class="p-tag">${p.symbol||''} <span style="color:var(--text-mid)">${p.type||''}</span> ${fmt(p.volume,2)}</span>
-      <span class="p-pnl ${pc}">${fmt(p.profit)}</span>
+      <div class="pos-row-top">
+        <span class="p-tag">${p.symbol||''} <span style="color:var(--text-mid)">${p.type||''}</span> ${fmt(p.volume,2)}</span>
+        <span class="p-pnl ${pc}">${fmt(p.profit)}</span>
+      </div>
+      <div class="pos-row-detail">
+        <span><b>${fmt(p.open_price,5)}</b> → <b>${fmt(p.current_price,5)}</b></span>
+        ${hasSlTp ? `<span>SL <b>${Number(p.sl)>0?fmt(p.sl,5):'—'}</b> / TP <b>${Number(p.tp)>0?fmt(p.tp,5):'—'}</b></span>` : ''}
+        <span>swap <b>${fmt(p.swap)}</b></span>
+        <span>open <b>${fmtDuration(p.duration_min)}</b> ago</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  const baskets = (a.symbols||[]).filter(s => s.leg_count > 0 || Math.abs(s.net_total||0) > 0.005).map(s => {
+    const net = Number(s.net_total)||0;
+    const netClass = net >= 0 ? 'pos' : 'neg';
+    return `<div class="basket-row">
+      <div class="basket-top">
+        <span class="basket-symbol">${s.symbol}</span>
+        <span class="basket-legs">${s.leg_count} leg${s.leg_count===1?'':'s'} · avg ${fmt(s.avg_entry,5)}</span>
+        <span class="basket-net ${netClass}">${net>=0?'+':''}${fmt(net)}</span>
+      </div>
+      <div class="basket-detail">
+        <span>profit <b>${fmt((s.open_profit||0)+(s.closed_profit||0))}</b></span>
+        <span>swap <b>${fmt((s.open_swap||0)+(s.closed_swap||0))}</b></span>
+        <span>commission <b>${fmt(s.closed_commission)}</b></span>
+      </div>
     </div>`;
   }).join('');
 
@@ -272,6 +334,14 @@ function renderCard(a){
       <div class="metric"><div class="label">Equity</div><div class="val">${fmt(a.equity)}</div></div>
       <div class="metric"><div class="label">Margin Lvl</div><div class="val">${fmt(a.margin_level,1)}%</div></div>
     </div>
+    <div class="metrics secondary">
+      <div class="metric"><div class="label">Leverage</div><div class="val">1:${fmt(a.leverage,0)}</div></div>
+      <div class="metric"><div class="label">Free Margin</div><div class="val">${fmt(a.margin_free)}</div></div>
+      <div class="metric"><div class="label">Margin Used</div><div class="val">${fmt(a.margin_used_pct,1)}%</div></div>
+      <div class="metric"><div class="label">Day P&amp;L</div><div class="val ${dayPnl>0?'pos':(dayPnl<0?'neg':'')}">${dayPnl>=0?'+':''}${fmt(dayPnl)}</div></div>
+      <div class="metric"><div class="label">Drawdown</div><div class="val ${dd>0.01?'neg':''}">${fmt(dd,1)}%</div></div>
+    </div>
+    ${baskets ? `<div class="baskets"><div class="baskets-title">Per-symbol breakdown</div>${baskets}</div>` : ''}
     ${positions ? `<div class="positions">${positions}</div>` : ''}
   </div>`;
 }
